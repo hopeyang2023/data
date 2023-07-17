@@ -1,0 +1,39 @@
+---
+title: "Untitled"
+author: "Jianxia Yang"
+date: "2023-05-22"
+output: html_document
+---
+
+```{r cars}
+rm(list=ls())
+setwd("/Users/yangjianxia/Documents/code_data/Fig.3/e")
+library(lavaan)
+library(readxl)
+library(dplyr)
+data<-read_excel("SEM.xlsx",sheet = "Nadd")
+data$ZNadd<-scale(data$Nadd)
+data$ZN<-scale(data$N)
+data$ZIN<-scale(data$IN)
+data$ZpH<-scale(data$pH)
+data$ZOTU.richness<-scale(data$OTU.richness)
+data$ZKO.richness<-scale(data$KO.richness)
+data$ZPlant.richness<-scale(data$Plant.richness)
+data$ZCN<-scale(data$CN.ratio)
+data$ZMn<-scale(data$Mn)
+data$ZCu<-scale(data$Cu)
+data$Zlgt<-scale(data$lgt)
+data$Zlgtko<-scale(data$lgtko)
+model='
+ZIN~ZN+ZNadd
+ZpH~ZN+ZNadd
+Zlgtko~ZN+ZpH+ZIN+ZNadd
+ZOTU.richness~ZN+ZIN+ZpH
+ZKO.richness~ZN+ZIN+Zlgtko
+ZOTU.richness~~ZOTU.richness'
+gs<-sem(model=model, data=data)
+summary(gs,rsq=T,standardize=T)
+summary(gs,modindices=T)
+fitMeasures(gs)
+```
+
