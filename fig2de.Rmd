@@ -1,0 +1,135 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-07-12"
+---
+
+
+```{r,warning=FALSE,message=FALSE,fig.height=8.29,fig.width=6.54}
+setwd("/Users/yangjianxia/Documents/code_data/Fig.2/de")
+rm(list=ls())
+###Ncess N0 VS Ncess N50
+library(vegan)
+FG<-read.csv("KO.csv",header = T,row.names = 1)
+library(edgeR)
+library(statmod)
+FG<-FG[,c(1:5,31:35)]
+group <- rep(c('Ncess N0', 'Ncess N50'), c(5,5))
+head(FG)
+group
+dgelist <- DGEList(counts = FG, group = group)
+keep <- rowSums(cpm(dgelist) > 1 ) >= 2
+dgelist <- dgelist[keep, ,keep.lib.sizes = FALSE]
+dgelist_norm <- calcNormFactors(dgelist, method = 'TMM')
+#plotMDS(dgelist_norm, col = rep(c('red', 'blue'), c(5,5)), dim = c(1, 2))
+design <- model.matrix(~group)    #构建分组矩阵
+dge <- estimateDisp(dgelist_norm, design, robust = TRUE) #估算离散值
+#plotBCV(dge) #作图查看
+fit <- glmFit(dge, design, robust = TRUE)     #拟合模型
+lrt <- glmLRT(fit)   #统计检验
+topTags(lrt)#FDR校正后的p值
+#write.csv(topTags(lrt, n = nrow(dgelist$counts)), 'glmLRT.KONcessN50.csv', quote = FALSE) 
+dge_de <- decideTestsDGE(lrt, adjust.method = 'fdr', p.value = 0.05)  #查看默认方法获得的差异基因
+summary(dge_de)
+gene<-read.csv("glmLRT.KONcessN50.csv",row.names=1,head=T)
+#例如这里自定义根据 |log2FC| >= 1 和 adj.P.Val(FDR) < 0.01 标记差异类型
+gene[which(gene$FDR < 0.05 & gene$logFC <= -0.5),'sig'] <- 'Down'
+gene[which(gene$FDR < 0.05 & gene$logFC >=0.5),'sig'] <- 'Up'
+gene[which(gene$FDR >= 0.05 | abs(gene$logFC) < 0.5),'sig'] <- 'None'
+sum(gene$sig=="Down")
+#378
+sum(gene$sig=="Up")
+#643
+sum(gene$sig=="None")
+#3004
+#write.csv(gene, 'KO.Ncess N50.csv', quote = FALSE) 
+#横轴 log2FC，纵轴 -log10(adj.P.Val)，颜色表示差异
+gene$sig <- factor(gene$sig, levels = c("Up", "Down","None"))
+library(ggplot2)
+p1<-ggplot(gene, aes(x = logFC, y = -log10(FDR), color = sig)) +
+  geom_point(alpha = 0.8, size = 3) +
+  scale_colour_manual(values  = c('#8d0f82', '#fcee21', 'grey'), 
+                      limits = c('Up', 'Down', 'None')) +
+  geom_vline(xintercept = c(-0.5, 0.5), color = 'gray', size = 1.5) +
+  geom_hline(yintercept = -log(0.05, 10), color = 'gray', size = 1.5) +
+  xlim(-5, 8) + ylim(-1,45) +
+  labs(x=(bquote(Log[2]~(Fold~change))),
+       y=(bquote(-Log[10]~(FDR~italic(p)-value))),
+       title = expression(N[cess]~N50~v.s.~N0))+
+  theme(text=element_text(size=30,  family="sans"))+theme_bw()+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(colour="black", size=20),
+        plot.title = element_text(colour="black", size=20,hjust = 0.5),
+        axis.text.y=element_text(colour="black", size=20),
+        axis.title.y=element_text(colour="black", size=20),
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.key = element_rect(fill = 'transparent'),
+        legend.background = element_rect(fill = 'transparent'),legend.position = c(0.78, 0.78))
+p1<-p1+theme(panel.border = element_rect(fill = NA,color = "black",size=1.5,linetype = "solid"))
+#ggsave("Ncess50vs0_volcano.pdf",width = 8.41,height = 5.16)
+###Ncont N0 VS Ncont N50
+library(vegan)
+FG<-read.csv("KO.csv",header = T,row.names = 1)
+library(edgeR)
+library(statmod)
+FG<-FG[,c(36:40,66:70)]
+group <- rep(c('Ncont N0', 'Ncont N50'), c(5,5))
+head(FG)
+group
+dgelist <- DGEList(counts = FG, group = group)
+keep <- rowSums(cpm(dgelist) > 1 ) >= 2
+dgelist <- dgelist[keep, ,keep.lib.sizes = FALSE]
+dgelist_norm <- calcNormFactors(dgelist, method = 'TMM')
+#plotMDS(dgelist_norm, col = rep(c('red', 'blue'),c(5,5)), dim = c(1, 2))
+design <- model.matrix(~group)    #构建分组矩阵
+dge <- estimateDisp(dgelist_norm, design, robust = TRUE) #估算离散值
+#plotBCV(dge) #作图查看
+fit <- glmFit(dge, design, robust = TRUE)     #拟合模型
+lrt <- glmLRT(fit)   #统计检验
+topTags(lrt)#FDR校正后的p值
+#write.csv(topTags(lrt, n = nrow(dgelist$counts)), 'glmLRT.KONcontN50.csv', quote = FALSE) 
+dge_de <- decideTestsDGE(lrt, adjust.method = 'fdr', p.value = 0.05)  #查看默认方法获得的差异基因
+summary(dge_de)
+gene<-read.csv("glmLRT.KONcontN50.csv",row.names=1,head=T)
+#例如这里自定义根据 |log2FC| >= 1 和 adj.P.Val(FDR) < 0.01 标记差异类型
+gene[which(gene$FDR < 0.05 & gene$logFC <= -0.5),'sig'] <- 'Down'
+gene[which(gene$FDR < 0.05 & gene$logFC >=0.5),'sig'] <- 'Up'
+gene[which(gene$FDR >= 0.05 | abs(gene$logFC) < 0.5),'sig'] <- 'None'
+sum(gene$sig=="Down")
+###606
+sum(gene$sig=="Up")
+###870
+sum(gene$sig=="None")
+###2540
+#write.csv(gene, 'KO.Ncont N50.csv', quote = FALSE) 
+#横轴 log2FC，纵轴 -log10(adj.P.Val)，颜色表示差异
+gene$sig <- factor(gene$sig, levels = c("Up", "Down","None"))
+library(ggplot2)
+p2<-ggplot(gene, aes(x = logFC, y = -log10(FDR), color = sig)) +
+  geom_point(alpha = 0.8, size = 3) +
+  scale_colour_manual(values  = c('#8d0f82', '#fcee21', 'grey'), 
+                      limits = c('Up', 'Down', 'None')) +
+  geom_vline(xintercept = c(-0.5, 0.5), color = 'gray', size = 1.5) +
+  geom_hline(yintercept = -log(0.05, 10), color = 'gray', size = 1.5) +
+  xlim(-5, 8) + ylim(-1, 45) +
+  labs(x=(bquote(Log[2]~(Fold~change))),
+       y=(bquote(-Log[10]~(FDR~italic(p)-value))),
+       title = expression(N[cont]~N50~v.s.~N0))+
+  theme(text=element_text(size=20,  family="sans"))+theme_bw()+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(colour="black", size=20),
+        plot.title = element_text(colour="black", size=20,hjust = 0.5),
+        axis.text=element_text(colour="black",size=20),
+        axis.title=element_text(colour="black",size=20),
+        legend.key = element_rect(fill = 'transparent'),
+        legend.background = element_rect(fill = 'transparent'),legend.position = c(0.78, 0.78))
+p2<-p2+theme(panel.border = element_rect(fill = NA,color = "black",size=1.5,linetype = "solid"))
+#ggsave("Ncont50vs0_volcano.pdf",width = 8.41,height = 5.16)
+library(patchwork)
+p1+p2+plot_layout(ncol = 1,byrow=FALSE)
+ggsave("fig2de.pdf",width=6.54,height = 8.29)
+```
+
+
