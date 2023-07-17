@@ -1,0 +1,50 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-07-06"
+---
+
+
+```{r,message=FALSE,warning=FALSE,fig.height=18.87,fig.width=15.27}
+rm(list=ls())
+setwd("/Users/yangjianxia/Documents/code_data/Fig.5/b")
+library(pheatmap)
+data <- read.csv("Cobalamin.biosynthesis.csv",header = T,row.names = 1)
+group <- read.csv("group.csv",header = T,row.names = 1)
+ann_colors = list(Phylum=c(Acidobacteriota="red",Patescibacteria="blue",Proteobacteria="slateblue1",
+                           Actinobacteriota="springgreen",Chloroflexota="steelblue1",Bacteroidota="tan1",
+                           Gemmatimonadota="tomato",Planctomycetota="turquoise",Verrucomicrobiota="violet",
+                           Armatimonadota="darkorange",Cyanobacteria="firebrick",Eremiobacterota="darkgreen"),
+                  KO=c(K00595="pink",K00768="plum2",
+                       K00798="purple",K02188="wheat",
+                       K02189="cornsilk3",K02224="cornsilk",
+                       K02225="coral4",K02226="coral",
+                       K02227="darksalmon",
+                       K02228="chocolate4",K02229="chartreuse4",
+                       K02230="black",
+                       K02231="chartreuse4",K02232="chartreuse",
+                       K02233="burlywood4",K03394="burlywood",
+                       K03399="brown4",K03795="bisque4",
+                       K05895="bisque",K05934="azure4",
+                       K05936="azure",
+                       K06042="aquamarine4",K09882="aquamarine",
+                       K09883="antiquewhite4",
+                       K13540="antiquewhite",K13541="aliceblue",
+                       K19221="dodgerblue4",K21479="deepskyblue4",
+                       K22316="deepskyblue"))
+data1 <- data[,-1]
+group_data <- data.frame(data[,c(1)])
+row.names(group_data)=row.names(data)
+colnames(group_data) <- c("KO")
+
+#mycolors <- colorRampPalette(c("blue","gray99", "deeppink" , "black"))(40)
+pdf('Cobalamin biosynthesis.pdf', height =18.87, width = 15.27,pointsize = 30)
+pheatmap(data1, annotation_row = group_data,
+         annotation_col = group,show_rownames=F,
+         cluster_cols=F,cluster_rows=F,
+         annotation_colors = ann_colors,cutree_rows=1,
+         border=FALSE,
+         color = colorRampPalette(c("white","deeppink"))(200))
+dev.off()
+```
+
