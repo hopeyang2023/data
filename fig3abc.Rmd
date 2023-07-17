@@ -1,0 +1,107 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-07-12"
+---
+
+```{r,warning=FALSE,message=FALSE,fig.height=7.65,fig.width=11.66}
+rm(list=ls())
+setwd("/Users/yangjianxia/Documents/code_data/Fig.3/abc")
+library(ggplot2)
+library(colorRamps)
+library(gtable)
+library(dplyr)
+library(agricolae)
+library(nlme)
+library(vegan)
+library(psych)
+library(igraph)
+library(tidyr)
+library(MuMIn)
+da<-read.csv("Relation.csv",row.names = 1)
+da$LN<-log(da$Nlevel+1)
+da$Nadd <- factor(da$Nadd, levels = c("Ncess", "Ncont"))
+###otu richness
+rr1<-lme(OTU.richness~LN*Nadd,random = ~1|Block,data = da)
+summary(rr1)
+
+##统计分析,分开
+data1 <-da[da$Nadd=="Ncont",] 
+summary(lm(data1$OTU.richness~data1$LN))
+###r2=0.427,p<0.001
+data2 <-da[da$Nadd=="Ncess",] 
+summary(lm(data2$OTU.richness~data2$LN))
+###r2=0.223 p=0.002
+plot1<-ggplot(da,aes(x= LN, y= OTU.richness, colour = Nadd))+
+  geom_point(alpha = 0.5, size =13)+
+  stat_smooth(data = da, method ="lm",linewidth=2)+
+  scale_colour_manual(values=c( "blue","red"),
+                      labels=c(expression(N[cess]),expression(N[cont])))+
+  theme_bw()+
+  guides(colour=guide_legend(title = expression(N[add])))+
+  xlab(bquote(Log[10]~(N~levels)~(g~N~m^-2~yr^-1))) +
+  ylab(bquote('Bacterial OTU richness'))+theme_bw()+
+  theme(text=element_text(colour="black",size=40,  family="sans"))+
+  theme(legend.title = element_text(colour="black", size=40),
+        legend.text = element_text(colour="black", size=40),
+        axis.text=element_text(colour="black",size=35),
+        axis.title=element_text(colour="black",size=40))
+p1<-plot1+theme(panel.border = element_rect(fill = NA,color = "black",size=1.5,linetype = "solid"))
+p1
+ggsave("fig3a_otu_richness_lm.pdf",width = 11.66,height = 7.65)
+
+###ko richness
+rr1<-lme(KO.richness~LN*Nadd,random = ~1|Block,data = da)
+summary(rr1)
+##统计分析,分开
+data1 <-da[da$Nadd=="Ncont",] 
+summary(lm(data1$KO.richness~data1$LN))
+###r2=0.651,p<0.001
+data2 <-da[da$Nadd=="Ncess",] 
+summary(lm(data2$KO.richness~data2$LN))
+###r2=0.572 p<0.001
+plot1<-ggplot(da,aes(x= LN, y= KO.richness, colour = Nadd))+
+  geom_point(alpha = 0.5, size =13)+
+  stat_smooth(data = da, method ="lm",linewidth=2)+
+  scale_colour_manual(values=c( "blue","red"),
+                      labels=c(expression(N[cess]),expression(N[cont])))+
+  theme_bw()+
+  guides(colour=guide_legend(title = expression(N[add])))+
+  xlab(bquote(Log[10]~(N~levels)~(g~N~m^-2~yr^-1))) +
+  ylab(bquote('KO richness'))+theme_bw()+
+  theme(text=element_text(colour="black",size=40,  family="sans"))+
+  theme(legend.title = element_text(colour="black", size=40),
+        legend.text = element_text(colour="black", size=40),
+        axis.text=element_text(colour="black",size=35),
+        axis.title=element_text(colour="black",size=40))
+p2<-plot1+theme(panel.border = element_rect(fill = NA,color = "black",size=1.5,linetype = "solid"))
+p2
+ggsave("fig3b_KO_richness_lm.pdf",width = 11.66,height = 7.65)
+###KO V.S. OTU
+####KO.richness~~OTU.richness
+##统计分析
+data1 <-da[da$Nadd=="Ncont",] 
+summary(lm(data1$KO.richness~data1$OTU.richness))
+###r2=0.714 p<0.001
+data2 <-da[da$Nadd=="Ncess",] 
+summary(lm(data2$KO.richness~data2$OTU.richness))
+###r2=0.501 p<0.001
+plot1<-ggplot(da,aes(x= OTU.richness, y= KO.richness, colour = Nadd))+
+  geom_point(aes(color=Nadd), alpha = 0.5, size =13)+
+  stat_smooth(data = da, method ="lm",linewidth=2)+
+  scale_colour_manual(values=c( "blue","red"),
+                      labels=c(expression(N[cess]),expression(N[cont])))+
+  guides(colour=guide_legend(title = expression(N[add])))+theme_bw()+
+  xlab(bquote('Bacterial OTU richness')) +
+  ylab(bquote('KO richness'))+
+  theme(text=element_text(colour="black",size=40,  family="sans"))+
+  theme(legend.title = element_text(colour="black", size=40),
+        legend.text = element_text(colour="black", size=40),
+        axis.text=element_text(colour="black",size=35),
+        axis.title=element_text(colour="black",size=40))
+p3<-plot1+theme(panel.border = element_rect(fill = NA,color = "black",size=1.5,linetype = "solid"))
+p3
+ggsave("fig3c_otu_KO.pdf",width = 11.66,height = 7.65)
+```
+
+
