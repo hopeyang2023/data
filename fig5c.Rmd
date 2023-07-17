@@ -1,0 +1,68 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-07-06"
+---
+
+```{r,message=FALSE,warning=FALSE,fig.height=6.71,fig.width=15.27}
+###boxplot
+setwd("/Users/yangjianxia/Documents/code_data/Fig.5/c")
+library(vegan)
+library(pheatmap)
+library(colorRamps)
+library(ggplot2)
+data <- read.csv("Cobalamin.biosynthesis.csv",header = T,row.names = 1)
+group <- read.csv("group.csv",header = T,row.names = 1)
+data1<-data.frame(t(data[,-c(1)]))
+sum(rownames(group) != rownames(data1)) 
+#data2<-data.frame(data1,group$Phylum)
+R<-specnumber(data1)
+Shannon<-diversity(data1)
+Pielou_evenness<-Shannon/log(R)
+KOalpha=cbind(R,Shannon, Pielou_evenness)
+data3<-data.frame(KOalpha,stringsAsFactors = F)
+data4<-cbind(data3,group)
+data4$Phylum<-factor(data4$Phylum,levels=c("Acidobacteriota","Patescibacteria","Proteobacteria",
+                                           "Actinobacteriota","Chloroflexota","Bacteroidota",
+                                           "Gemmatimonadota","Planctomycetota","Verrucomicrobiota",
+                                           "Armatimonadota","Cyanobacteria","Eremiobacterota"))
+data4$Phylum<-factor(data4$Phylum,labels=c("Acidobacteriota","Patescibacteria","Proteobacteria",
+                                           "Actinobacteriota","Others","Others",
+                                           "Others","Others","Others",
+                                           "Others","Others","Others"))
+
+col11<-c("red","blue","slateblue1","springgreen","peru")
+#write.csv(data4,"Acofactors.vitamins.csv")
+
+h<-ggplot(data=data4, aes(x= Phylum , y= R,color=Phylum))+  
+  geom_boxplot( width = 0.5, position = position_dodge(width = 1.5)) +
+  scale_colour_manual(values=col11)+
+  ylim(0,30)+
+  theme_bw()+guides(color=guide_legend(title= "Phylum"))+
+  labs(x="",y = "KO richness of B12")+
+  theme(text=element_text(size=30,  family="sans"))+
+  theme(legend.title = element_text(colour="black", size=30),
+        legend.text = element_text(colour="black", size=30),
+        axis.text.y =element_text(size=25),
+        axis.title.y=element_text(size=30),
+        axis.text.x=element_blank(),
+        axis.title.x=element_blank(),
+        axis.ticks.x=element_blank())
+h
+ggsave("Cobalamin.biosynthesis.pdf",width = 15.27,height = 6.71)
+library(vegan)
+library(PMCMRplus)
+library(nlme)
+library(agricolae)
+kruskal_rlt <- function(y, trt) {
+  kru_rlt <- kruskal(y, trt, p.adj = "bonferroni")
+  kru_lab <- data.frame(
+    grp = rownames(kru_rlt$groups),
+    sig_lab = kru_rlt$groups$groups
+  )
+  return(kru_lab)
+} 
+kruskal.test(data4$R ~ data4$Phylum)
+kruskal_rlt(data4$R,data4$Phylum)
+mode2<-aov(R ~ Phylum,data=data4)
+```
