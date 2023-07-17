@@ -1,0 +1,52 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-07-06"
+---
+
+
+
+```{r,message=FALSE,warning=FALSE,fig.height=8.38,fig.width=11.53}
+setwd("/Users/yangjianxia/Documents/code_data/Fig.3/d")
+rm(list=ls())
+library(tidyverse)
+library(linkET)
+
+data<-read.csv("Relation.csv",row.names=1,header = T)
+data1<-subset(data,Nadd=="Ncont")
+data1<-data1[,4:10]
+data1<-as.data.frame(data1)
+colnames(data1)[1:7]<-c("N level","Inorganic N","Soil pH","KO richness","OTU richness",
+                        "HGTs richness","Virus diversity")
+data1
+
+
+data2<-subset(data,Nadd=="Ncess")
+data2<-data2[,4:10]
+data2<-as.data.frame(data2)
+colnames(data2)[1:7]<-c("N level","Inorganic N","Soil pH","KO richness","OTU richness",
+                        "HGTs richness","Virus diversity")
+data2
+# plot gridline
+data_cor <- correlate(data1)
+# mixed corrplot
+data1_cor <- correlate(data1) %>% as_md_tbl()
+data2_cor <- correlate(data2) %>% as_md_tbl()
+data_sum <- rbind(extract_upper(data1_cor), extract_lower(data2_cor))
+data_sum1 <- 
+  data_sum %>% mutate(sel = if_else(.rownames == .colnames, 0, 1)) %>% 
+  filter(sel == 1) %>% select(-sel)
+mixed_heatmap_p <- 
+  qcorrplot(data = data_cor, type = "full") +
+  geom_square(data = data_sum1) +
+  geom_mark(data = data_sum1, sep = '\n',size=20,sig_level = c(0.05,0.01,0.001),
+            sig_thres = 0.05,only_mark = TRUE)+
+  scale_fill_gradientn(colours = RColorBrewer::brewer.pal(11, "RdYlBu")) +
+  scale_size_manual(values = c(0.5, 1, 2)) +
+  scale_colour_manual(values = color_pal(3)) +
+  guides(fill = guide_colorbar(title = "Pearson's r", order = 3))+
+  theme(axis.text = element_text(size=25))
+mixed_heatmap_p
+ggsave("fig3d_Nadd.pdf",width = 11.53,height =8.38)
+```
+
