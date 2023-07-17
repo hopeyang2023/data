@@ -1,0 +1,177 @@
+setwd("/Users/yangjianxia/Documents/code_data/Fig.4/cd")
+rm(list=ls())
+library(GO.db)
+library(vegan)
+library(permute)        
+library(lattice)
+library(WGCNA)
+library(multtest)
+library(igraph)
+library(brainGraph)
+###NcessN50
+bac.coco<-read.csv("NN50.csv",head=T,row.names = 1)
+#(bac.coco<-data.frame(decostand(bac.coco[,9:24],"hel")) 
+#bac.coco<- t(bac.coco)
+matrix2igraph2<-function(matr,r.threshold,p.threshold){
+  occor<-corAndPvalue(matr,method = c( "spearman")) 
+  mtadj<-mt.rawp2adjp(unlist(occor$p),proc="TSBH") 
+  adpcor<-mtadj$adjp[order(mtadj$index),2]
+  occor.p<-matrix(adpcor,dim(matr)[2])
+  occor.r<-occor$cor
+  occor.r[occor.p>p.threshold|abs(occor.r)<r.threshold]<-0 
+  diag(occor.r)<-0  
+  igraph<-graph.adjacency(occor.r,mode="undirected", weighted=TRUE, diag=FALSE)# NOTE:可以设置weighted=NULL,但是此时要注意此函数只能识别相互作用矩阵内正整数，所以应用前请确保矩阵正确
+  igraph<- igraph::simplify(igraph)
+  igraph
+}
+
+bac<-matrix2igraph2(bac.coco,0.80,0.01) ###  r,p值可人为设定##
+
+
+bad.vs<-V(bac)[degree(bac) == 0] 
+igraph <- delete.vertices(bac, bad.vs) 
+igraph
+write.graph(igraph ,"16S.NN50_occor.gml",format="gml")
+
+sum(E(igraph)$weight>0)###number of postive correlation  
+sum(E(igraph)$weight<0)###number of negative correlation  
+
+###whole network properties
+net.fun.metrics<-matrix(nrow=20,ncol=1)
+net.fun.metrics[1,1]<-length(E(igraph))##length(curve_multiple(funteria.fungi.archea.g))
+net.fun.metrics[2,1]<-length(V(igraph))
+#net.fun.metrics[3,1]<-connectedness(as.matrix(as_adjacency_matrix(igraph, type = c("both"))))##connectedness FROM sna package 这个包会影响其他网络性质的计算
+net.fun.metrics[4,1]<-edge_density(igraph,loops=FALSE)
+net.fun.metrics[5,1]<-mean(igraph::degree(igraph))
+#net.fun.metrics[6,1]<-average.path.length(igraph) 
+net.fun.metrics[7,1]<-diameter(igraph, directed = FALSE, unconnected = TRUE, weights = NA)
+net.fun.metrics[8,1]<-edge_connectivity(igraph)
+net.fun.metrics[9,1]<-vertex_connectivity(igraph)
+net.fun.metrics[10,1]<-cohesion(igraph)
+net.fun.metrics[11,1]<-transitivity(igraph)
+net.fun.metrics[12,1]<-no.clusters(igraph)
+net.fun.metrics[13,1]<-sum(graph.knn(igraph)$knn[!is.na(graph.knn(igraph)$knn)])/length(V(igraph))####受网络有无weight影响
+#net.fun.metrics[14,1]<-centralization.closeness(igraph)$centralization
+net.fun.metrics[15,1]<-centralization.betweenness(igraph)$centralization
+net.fun.metrics[16,1]<-centralization.degree(igraph)$centralization
+net.fun.metrics[17,1]<-assortativity.degree(igraph)
+E(igraph)$weight<-abs(E(igraph)$weight)
+fun_fc<-cluster_fast_greedy(igraph)
+net.fun.metrics[18,1]<-modularity(igraph,membership(fun_fc))
+net.fun.metrics[19,1]<-mean(igraph::betweenness(igraph))
+net.fun.metrics[20,1]<-diameter(igraph, directed = FALSE, unconnected = TRUE)
+rownames(net.fun.metrics)<-c("num.edges","num.vertices","connectedness","connectance","average.degree","average.path.length","diameter",                      "edge_connectivity","vertex.connectivity","cohesion","clustering.coefficient","no.clusters","avenei","centralization.closeness",                          "centralization.betweenness","centralization.degree","assortativity.degree","modularity","average.betweenness","w.diameter")
+colnames(net.fun.metrics)<-"value"
+write.csv(net.fun.metrics,"NN50.net.metrics.csv")
+
+
+####N0
+bac.coco<-read.csv("YN00.csv",head=T,row.names = 1)
+#(bac.coco<-data.frame(decostand(bac.coco[,9:24],"hel")) 
+#bac.coco<- t(bac.coco)
+matrix2igraph2<-function(matr,r.threshold,p.threshold){
+  occor<-corAndPvalue(matr,method = c( "spearman")) 
+  mtadj<-mt.rawp2adjp(unlist(occor$p),proc="TSBH") 
+  adpcor<-mtadj$adjp[order(mtadj$index),2]
+  occor.p<-matrix(adpcor,dim(matr)[2])
+  occor.r<-occor$cor
+  occor.r[occor.p>p.threshold|abs(occor.r)<r.threshold]<-0 
+  diag(occor.r)<-0  
+  igraph<-graph.adjacency(occor.r,mode="undirected", weighted=TRUE, diag=FALSE)# NOTE:可以设置weighted=NULL,但是此时要注意此函数只能识别相互作用矩阵内正整数，所以应用前请确保矩阵正确
+  igraph<- igraph::simplify(igraph)
+  igraph
+}
+
+bac<-matrix2igraph2(bac.coco,0.80,0.01) ###  r,p值可人为设定##
+
+
+bad.vs<-V(bac)[degree(bac) == 0] 
+igraph <- delete.vertices(bac, bad.vs) 
+igraph
+write.graph(igraph ,"16S.YN00_occor.gml",format="gml")
+
+sum(E(igraph)$weight>0)###number of postive correlation  
+sum(E(igraph)$weight<0)###number of negative correlation  
+
+###whole network properties
+net.fun.metrics<-matrix(nrow=20,ncol=1)
+net.fun.metrics[1,1]<-length(E(igraph))##length(curve_multiple(funteria.fungi.archea.g))
+net.fun.metrics[2,1]<-length(V(igraph))
+#net.fun.metrics[3,1]<-connectedness(as.matrix(as_adjacency_matrix(igraph, type = c("both"))))##connectedness FROM sna package 这个包会影响其他网络性质的计算
+net.fun.metrics[4,1]<-edge_density(igraph,loops=FALSE)
+net.fun.metrics[5,1]<-mean(igraph::degree(igraph))
+#net.fun.metrics[6,1]<-average.path.length(igraph) 
+net.fun.metrics[7,1]<-diameter(igraph, directed = FALSE, unconnected = TRUE, weights = NA)
+net.fun.metrics[8,1]<-edge_connectivity(igraph)
+net.fun.metrics[9,1]<-vertex_connectivity(igraph)
+net.fun.metrics[10,1]<-cohesion(igraph)
+net.fun.metrics[11,1]<-transitivity(igraph)
+net.fun.metrics[12,1]<-no.clusters(igraph)
+net.fun.metrics[13,1]<-sum(graph.knn(igraph)$knn[!is.na(graph.knn(igraph)$knn)])/length(V(igraph))####受网络有无weight影响
+#net.fun.metrics[14,1]<-centralization.closeness(igraph)$centralization
+net.fun.metrics[15,1]<-centralization.betweenness(igraph)$centralization
+net.fun.metrics[16,1]<-centralization.degree(igraph)$centralization
+net.fun.metrics[17,1]<-assortativity.degree(igraph)
+E(igraph)$weight<-abs(E(igraph)$weight)
+fun_fc<-cluster_fast_greedy(igraph)
+net.fun.metrics[18,1]<-modularity(igraph,membership(fun_fc))
+net.fun.metrics[19,1]<-mean(igraph::betweenness(igraph))
+net.fun.metrics[20,1]<-diameter(igraph, directed = FALSE, unconnected = TRUE)
+rownames(net.fun.metrics)<-c("num.edges","num.vertices","connectedness","connectance","average.degree","average.path.length","diameter",                      "edge_connectivity","vertex.connectivity","cohesion","clustering.coefficient","no.clusters","avenei","centralization.closeness",                          "centralization.betweenness","centralization.degree","assortativity.degree","modularity","average.betweenness","w.diameter")
+colnames(net.fun.metrics)<-"value"
+write.csv(net.fun.metrics,"YN00.net.metrics.csv")
+####NcontN50
+bac.coco<-read.csv("YN50.csv",head=T,row.names = 1)
+#(bac.coco<-data.frame(decostand(bac.coco[,9:24],"hel")) 
+#bac.coco<- t(bac.coco)
+matrix2igraph2<-function(matr,r.threshold,p.threshold){
+  occor<-corAndPvalue(matr,method = c( "spearman")) 
+  mtadj<-mt.rawp2adjp(unlist(occor$p),proc="TSBH") 
+  adpcor<-mtadj$adjp[order(mtadj$index),2]
+  occor.p<-matrix(adpcor,dim(matr)[2])
+  occor.r<-occor$cor
+  occor.r[occor.p>p.threshold|abs(occor.r)<r.threshold]<-0 
+  diag(occor.r)<-0  
+  igraph<-graph.adjacency(occor.r,mode="undirected", weighted=TRUE, diag=FALSE)# NOTE:可以设置weighted=NULL,但是此时要注意此函数只能识别相互作用矩阵内正整数，所以应用前请确保矩阵正确
+  igraph<- igraph::simplify(igraph)
+  igraph
+}
+
+bac<-matrix2igraph2(bac.coco,0.80,0.01) ###  r,p值可人为设定##
+
+
+bad.vs<-V(bac)[degree(bac) == 0] 
+igraph <- delete.vertices(bac, bad.vs) 
+igraph
+write.graph(igraph ,"16S.YN50_occor.gml",format="gml")
+
+sum(E(igraph)$weight>0)###number of postive correlation  
+sum(E(igraph)$weight<0)###number of negative correlation  
+
+###whole network properties
+net.fun.metrics<-matrix(nrow=20,ncol=1)
+net.fun.metrics[1,1]<-length(E(igraph))##length(curve_multiple(funteria.fungi.archea.g))
+net.fun.metrics[2,1]<-length(V(igraph))
+#net.fun.metrics[3,1]<-connectedness(as.matrix(as_adjacency_matrix(igraph, type = c("both"))))##connectedness FROM sna package 这个包会影响其他网络性质的计算
+net.fun.metrics[4,1]<-edge_density(igraph,loops=FALSE)
+net.fun.metrics[5,1]<-mean(igraph::degree(igraph))
+#net.fun.metrics[6,1]<-average.path.length(igraph) 
+net.fun.metrics[7,1]<-diameter(igraph, directed = FALSE, unconnected = TRUE, weights = NA)
+net.fun.metrics[8,1]<-edge_connectivity(igraph)
+net.fun.metrics[9,1]<-vertex_connectivity(igraph)
+net.fun.metrics[10,1]<-cohesion(igraph)
+net.fun.metrics[11,1]<-transitivity(igraph)
+net.fun.metrics[12,1]<-no.clusters(igraph)
+net.fun.metrics[13,1]<-sum(graph.knn(igraph)$knn[!is.na(graph.knn(igraph)$knn)])/length(V(igraph))####受网络有无weight影响
+#net.fun.metrics[14,1]<-centralization.closeness(igraph)$centralization
+net.fun.metrics[15,1]<-centralization.betweenness(igraph)$centralization
+net.fun.metrics[16,1]<-centralization.degree(igraph)$centralization
+net.fun.metrics[17,1]<-assortativity.degree(igraph)
+E(igraph)$weight<-abs(E(igraph)$weight)
+fun_fc<-cluster_fast_greedy(igraph)
+net.fun.metrics[18,1]<-modularity(igraph,membership(fun_fc))
+net.fun.metrics[19,1]<-mean(igraph::betweenness(igraph))
+net.fun.metrics[20,1]<-diameter(igraph, directed = FALSE, unconnected = TRUE)
+rownames(net.fun.metrics)<-c("num.edges","num.vertices","connectedness","connectance","average.degree","average.path.length","diameter",                      "edge_connectivity","vertex.connectivity","cohesion","clustering.coefficient","no.clusters","avenei","centralization.closeness",                          "centralization.betweenness","centralization.degree","assortativity.degree","modularity","average.betweenness","w.diameter")
+colnames(net.fun.metrics)<-"value"
+write.csv(net.fun.metrics,"YN50.net.metrics.csv")
